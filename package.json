@@ -1,0 +1,11 @@
+{
+  "name": "foxx-server",
+  "version": "1.0.0",
+  "description": "writing foxx with less learning cost",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Thomas Cameron",
+  "license": "MIT"
+}
