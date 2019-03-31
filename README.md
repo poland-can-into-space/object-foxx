@@ -3,13 +3,83 @@ spend less time writing foxx.
 ## About
 I wanted something that will automatically parse AQL and let me ignore everything that I didn't like, like writing router.get yada yada.
 
+## features!  
+1. Automatic AQL validation  
+Any aql string registered at config object will be validated.  
+2. Alias for joi  
+It has a convinient function that exports alias for joi.
+`joi.string().required()` will become `str().required()`.
+3. Methods are easier
+```
+router.get("/path", function(req, res){
+  // do stuff
+  const aqlResult = db._query({
+    query: "query string",
+    bindVars: {
+      // lots of properties
+    }
+  })
+  if (aqlResult == something) {
+    // complicated stuff
+    res.status(200).send(JSON.stringify(aqlResult))
+  } else {
+    res.status(404).send(JSON.stringify(notFound))
+  }
+})
+.queryParam("userId", str().required())
+.queryParam("phoneNumber", int().required())
+```
+will become
+```
+{
+  method: "get",
+  path: "/",
+  func: function() {
+    return AQL(`
+      for c in @@Collection
+        filter
+          c.user == @query.userId
+          && c.contact.phoneNumber == @query.phoneNumber
+        limit 1
+      return c
+    `)
+  },
+  query: {
+    userId: str().required(),
+    phoneNumber: int().required()
+  }
+}
+```
+You no longer need to decide which status code to use and stringifying values. This framework will automatically assign the right property for bindVars and stringify values should it be an object.
+
+- status code
+It uses following table to decide;
+
+|value|status code|
+---|---|
+|undefined|501|
+|false|403|
+|true|204|
+|null|404|
+|other than above|200|
+_NOTES_  
+If the returned value is an array with 1 element, status code will be decided based on the above table.
+
+- response body
+
+|value|what will happen|
+|---|---|
+|value which is a object but not null|JSON.stringify(value) will becomes the body|
+|non-object value|JSON.stringify({data: value}) will become the body|
+
+- assigning status code and response body explicitly
+
+You can return a object with status and body property.  
+`{status: number, body: value } `  
+number at status will become the status code while body will become the response body.
+
 ## Getting started
-### Object style routes
-1. In a nutshell
-
-There are 2 kinds of object you must define; one is for defining http routes(Routes Object) and another is for configuring the functions for DRY(Config object).
-
-2. Routes Object
+1. Routes Object
 
 Schema is as follow
 
