@@ -11,6 +11,7 @@ function newRouter(router) {
     return router;
   }
 }
+
 function aqlValidation(config) {
   const db = require("@arangodb").db;
   function save(object, id, error) {
@@ -36,7 +37,7 @@ function aqlValidation(config) {
 
 function main(routes, config, router) {
   if (config.AQL) {
-    aqlValidation(config.AQL)
+    aqlValidation(config)
   }
   global._json_server_config = config
   const { servicePath, tag } = config;
