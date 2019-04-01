@@ -441,7 +441,6 @@ router.get("/humans/:planet/restaurant", function(req, res) {
     }
   }
 ```
-You notice that in Object-Foxx, you can configure the schema for queryParam in a object under `request.query` property. Furthermore, method and path is defined more explicitly and status code and the body for the response is not explicitly defined.
 
 ## Future remarks  
 Things that I'd love to do:
