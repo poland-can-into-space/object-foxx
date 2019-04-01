@@ -14,11 +14,10 @@ Debugging made easier!
 2. Alias for joi  
 It has a convenient function that exports alias for joi.
 `joi.string().required()` will become `str().required()`.
-3. less learning!  
-Many things will be done under the hood.  
-4. No Try Catch block    
-Try Catch block is responsible for lengthy code and it is pretty important in Javascript. But no longer!  
-The framework will handled them.  
+3. No Try Catch block    
+Try Catch block is responsible for lengthy code but it is pretty important in Javascript.
+The framework will take care of them behind the hood.
+
 ## Comparison  
 Below is an example of hypothetical API for outerspace restaurant search engine.
 - traditional
