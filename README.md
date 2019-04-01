@@ -19,49 +19,56 @@ Debugging made easier!
 2. Alias for joi  
 It has a convenient function that exports alias for joi.
 `joi.string().required()` will become `str().required()`.
-3. less learning!
-Many things will be done under the hood.
-
+3. less learning!  
+Many things will be done under the hood.  
+4. No Try Catch block
+Try Catch block is responsible for lengthy code and it is pretty important in Javascript. But no longer!
+The framework will handled them.
 ## Comparison
-Below is an example;
+Below is an example of hypothetical API for outerspace restaurant search engine.
 - traditional
 ```
 router.get("/humans/:planet/restaurant", function(req, res) {
-  if (!notDDOS(req)) return res.status(403).json({})
-  else if (!humanRequest(req)) return res.status(403).json({})
-  const {
-    planet
-  } = req.pathParams
-  const {
-    food, race
-  } = req.queryParams
-  restaurant
-  const result = db.query({
-    query: `
-      for p in Planets
-        filter
-          p.planet == @planet
-        limit 1
-      for r in Restaurant
-        filter
-          r.food == @food
-          && !HAS(r.segregation, "humans")
-      for g in Guide
-        filter
-          HAS(g.languages, @race)
-        limit 100
-      return MERGE(r,{
-        language: g.languages
-      })
-    `,
-    bindVars: {
-      planet, food, race
+  try {
+    if (!notDDOS(req)) return res.status(403).json({})
+    else if (!humanRequest(req)) return res.status(403).json({})
+    else {
+      const {
+        planet
+      } = req.pathParams
+      const {
+        food, race
+      } = req.queryParams
+      const result = db.query({
+        query: `
+          for p in Planets
+            filter
+              p.planet == @planet
+            limit 1
+          for r in Restaurant
+            filter
+              r.food == @food
+              && !HAS(r.segregation, "humans")
+          for g in Guide
+            filter
+              HAS(g.languages, @race)
+            limit 100
+          return MERGE(r,{
+            language: g.languages
+          })
+        `,
+        bindVars: {
+          planet, food, race
+        }
+      })._documents
+      if (result[0] !== null) {
+        res.status(200).json(result)
+      } else {
+        res.status(404).json(result)
+      }
     }
-  })._documents
-  if (result[0] !== null) {
-    res.status(200).json(result)
-  } else {
-    res.status(404).json(result)
+  } catch (e) {
+     res.throw(500, e)
   }
 })
 .queryParam("food", joi.string().required(), "category for food")
