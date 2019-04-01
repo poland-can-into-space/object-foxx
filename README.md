@@ -98,7 +98,8 @@ router.get("/humans/:planet/restaurant", function(req, res) {
     }
   }
 ```
-You no longer need to decide which status code to use and stringifying values. This framework will automatically assign the right property for bindVars and stringify values should it be an object.
+You'd notice there is a big difference.
+Main objective of Object-foxx is to simplify things and they will be expained below.
 
 # joiAliases function
 - what it does  
@@ -446,9 +447,6 @@ router.get("/humans/:planet/restaurant", function(req, res) {
 
 ## Future remarks  
 Things that I'd love to do:
-- Foxx editor
-- GUI for debugging
-- Better documents
-
-## Hire me!  
-I'm on a job hunting.
+- GUI Foxx route editor
+- Improving debugging experience
+- Better document
