@@ -9,7 +9,7 @@ Any aql string registered at config object will be validated.
 2. Alias for joi  
 It has a convinient function that exports alias for joi.
 `joi.string().required()` will become `str().required()`.
-3. Methods are easier
+3. less learning!
 ```
 router.get("/path", function(req, res){
   // do stuff
