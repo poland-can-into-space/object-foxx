@@ -4,10 +4,8 @@ spend less time writing foxx.
 I wanted something that will automatically parse AQL and let me ignore everything that I didn't like, like writing router.get yada yada.
 
 ## Background    
-I tried to convince my friend to switch to ArangoDB.   
-Although the performance was convincing, he had concerns over learning cost.  
-I decided to make changes to the framework I was using personally to hoping to convince him and it worked!
-So I decided to share it with the public, hoping that everyone would like it.
+I tried to convince my friend to switch to ArangoDB bu he had concerns over learning cost. I made changes to my personal library to turn it into a framework of a sort... and it worked! He decoded to switched to ArangoDB.
+After that I decided to share it with the public, hoping that everyone would like it.
 
 ## NOTES  
 This is my first time uploading a framework for public inspection, I'm pretty sure it's missing a lot.   
