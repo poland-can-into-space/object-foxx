@@ -3,52 +3,98 @@ spend less time writing foxx.
 ## About
 I wanted something that will automatically parse AQL and let me ignore everything that I didn't like, like writing router.get yada yada.
 
+## Background    
+I tried to convince my friend to switch to ArangoDB. Although the performance was convincing, there were concerns over learning cost.
+I decided to make changes to the framework I was already using for my personal project, hoping that it will reduce learning cost.
+
+## NOTES  
+This is my first time uploading a framework for public inspection, I'm pretty sure it's missing a lot. 
+Especially with documents; I never wrote anything like this.
+**I appreciate feedbacks!!!**
+
 ## features!  
 1. Automatic AQL validation  
-Any aql string registered at config object will be validated.  
+Any aql string registered at config object will be validated upon uploading foxx.
+Debugging made easier!  
 2. Alias for joi  
-It has a convinient function that exports alias for joi.
+It has a convenient function that exports alias for joi.
 `joi.string().required()` will become `str().required()`.
 3. less learning!
+Many things will be done under the hood.
+
+## Comparison
+Below is an example;
+- traditional
 ```
-router.get("/path", function(req, res){
-  // do stuff
-  const aqlResult = db._query({
-    query: "query string",
+router.get("/humans/:planet/restaurant", function(req, res) {
+  if (!notDDOS(req)) return res.status(403).json({})
+  else if (!humanRequest(req)) return res.status(403).json({})
+  const {
+    planet
+  } = req.pathParams
+  const {
+    food, race
+  } = req.queryParams
+  restaurant
+  const result = db.query({
+    query: `
+      for p in Planets
+        filter
+          p.planet == @planet
+        limit 1
+      for r in Restaurant
+        filter
+          r.food == @food
+          && !HAS(r.segregation, "humans")
+      for g in Guide
+        filter
+          HAS(g.languages, @race)
+        limit 100
+      return MERGE(r,{
+        language: g.languages
+      })
+    `,
     bindVars: {
-      // lots of properties
+      planet, food, race
     }
-  })
-  if (aqlResult == something) {
-    // complicated stuff
-    res.status(200).send(JSON.stringify(aqlResult))
+  })._documents
+  if (result[0] !== null) {
+    res.status(200).json(result)
   } else {
-    res.status(404).send(JSON.stringify(notFound))
+    res.status(404).json(result)
   }
 })
-.queryParam("userId", joi.string().required())
-.queryParam("phoneNumber", joi.number().integer().required())
+.queryParam("food", joi.string().required(), "category for food")
+.queryParam("race", joi.string().required().valid(["Octopus", "Gray", "EarthMan", "MoonMan"]), "your race")
+.summary("returns a good restruant in outer space who accepts humans.")
 ```
-will become
+- object foxx way
 ```
-{
-  method: "get",
-  path: "/",
-  func: function() {
-    return AQL(`
-      for c in @@Collection
-        filter
-          c.user == @query.userId
-          && c.contact.phoneNumber == @query.phoneNumber
-        limit 1
-      return c
-    `)
-  },
-  query: {
-    userId: str().required(),
-    phoneNumber: int().required()
+  {
+    method: "get",
+    path: "/humans/:planet/restaurant/",
+    func: function(){
+      return AQL({key: "galaxticRestaurants"})
+    },
+    request: {
+      query: {
+        race: {
+          schema: str().required().valid(["Octopus", "Gray", "EarthMan", "MoonMan"]),
+          info: "your race"
+        },
+        food: {
+          schema: str().required(),
+          info: "category for food"
+        }
+      }
+    },
+    condition: [
+      "ddos", "humanRequest"
+    ],
+    info: {
+      summary: "returns a good restruant in outerspace who accepts humans"
+    }
   }
-}
 ```
 You no longer need to decide which status code to use and stringifying values. This framework will automatically assign the right property for bindVars and stringify values should it be an object.
 
@@ -397,4 +443,11 @@ router.get("/humans/:planet/restaurant", function(req, res) {
 ```
 You notice that in Object-Foxx, you can configure the schema for queryParam in a object under `request.query` property. Furthermore, method and path is defined more explicitly and status code and the body for the response is not explicitly defined.
 
-That's because, as it was mentioned earlier, in object-foxx, unelss defined explicitly 1) status code will be decided automatically, 2) for recurrent tasks, condition property can be supplied to invoke certain functions prior to invoking function supplied at func property. Unlike `router.use`, it will not be applied for every route; which could be useful to avoid doing things that's unecessary.
+## Future remarks  
+Things that I'd love to do:
+- Foxx editor
+- GUI for debugging
+- Better documents
+
+## Hire me!  
+I'm on a job hunting.
