@@ -26,8 +26,8 @@ router.get("/path", function(req, res){
     res.status(404).send(JSON.stringify(notFound))
   }
 })
-.queryParam("userId", str().required())
-.queryParam("phoneNumber", int().required())
+.queryParam("userId", joi.string().required())
+.queryParam("phoneNumber", joi.number().integer().required())
 ```
 will become
 ```
@@ -52,8 +52,167 @@ will become
 ```
 You no longer need to decide which status code to use and stringifying values. This framework will automatically assign the right property for bindVars and stringify values should it be an object.
 
-- status code
-It uses following table to decide;
+# joiAliases function
+- what it does  
+It supplies you with joi's alias so that you can type less.
+- how to import  
+`const {joiAliases} = require("object-foxx")`
+- how to use  
+Note that you don't need to use every each one of them.
+```
+const {
+  boolean,
+  object,
+  string,
+  number,
+  array,
+  obj,    //object
+  str,    // string
+  num,    // number
+  array,  // array,
+  bool,   // boolean,
+  int,    // umber().integer,
+  float,  // number
+} = joiAliases();
+```
+- table
+
+|  property name  |  value behind it  |
+| ---- | ---- |
+|  boolean  |  joi.boolean |
+|  bool  |  joi.boolean  |
+|  string  |  joi.string |
+|  str  |  joi.string |
+|  number  |  joi.number |
+|  num  |  joi.number  |
+|  int  |  joi.number().integer  |
+|  float  |  joi.number  |
+|  object  | joi.object |
+|  obj  |  joi.object  |
+|  array  |  joi.array |
+
+# AQL function
+- what it does  
+You can execute AQL query without explicitly defining the bindVars. Request body, query, path and headhers will be accessible without defininig it.  
+To give you an example;
+AQL query that looked like this
+```
+db._query({
+  query: `
+    for a in Admins
+      filter
+        a.authorization == @authorization
+      limit 1
+    for u in Users
+      filter
+        u.race == @race
+        && u.skinColor == @skinColor
+      limit 5
+    return u
+  `,
+  bindVars: {
+    race: req.queryParams.race,
+    skinColor: req.queryParams.skinColor,
+    authorization: req.headerParams["x-strong-token"]
+  }
+})._documents
+```
+will look like this with the AQL function :)
+```
+AQL(`
+  for a in Admins
+    filter
+      a.authorization == @headers.authorization
+    limit 1
+  for u in Users
+    filter
+      u.race == @query.race
+      && u.skinColor == @query.skinColor
+    limit 5
+  return u
+`)
+```
+- how to import  
+`const {AQL} = require("object-foxx")`
+- how to use  
+`AQL(arg1, arg2)`  
+- arg1   
+arg1 must be either a string of aql query or object with key property whose value is a string.   
+example: `{key: "some value"}`  
+When arg1 is supplied with object, it will look for a corresponding query string in `config object`'s `AQL` property.  
+It is recommended that any object you wish to use to be supplied in `config object`'s `AQL` property as they will be checked for errors when the foxx is uploaded.
+- arg2   
+arg2 must be an object but you need not to supply it unless you have a particular values you wish to use in AQL, which is not available in the `req` object.  
+
+# main function
+- what it does  
+You no longer need to specify the value
+- how to import  
+`const {main} = require("object-foxx")`
+- how to use  
+`main(arg1, arg2, arg3 \\ optional)`  
+arg1 must be an array of route object(explained later).  
+arg2 must be an config object.  
+arg3 is optionlal; if you are trying to use routes you have written already, you can pass the router object (the one you made with `createRouter()`).
+
+## Format
+### Config Object
+Detail about every properties are explained later.
+|  property name  |  value that should be passed  |
+| ---- | ---- |
+|  AQL  |  object(or array) of strings |
+|  use  |  array of functions  |
+|  conditions  |  object(or array) of functions |
+|  servicePath  |  string  |
+
+1. AQL  
+`AQL` property must be an object(or array) with aql strings.
+Any strings passed here will be parsed with `db._createStatement(string).parse()` method so that it can identify any aql query with errors.  
+Results will be stored in `ObjectFoxx-Main` collection.
+
+2. use  
+`use` property must be supplied with array of functions. Every functions within the array will be registered with `router.use(func)`.
+
+3. conditions  
+`conditions` property must be supplied with object(or array) whose value(element) must be a function.
+Any functions registered in `conditions` can be specified in Route Object's `conditions` property **(explained later)** to be used prior to execution of a function registered with `func`.
+
+3. servicePath  
+`servicePath` property must be a string. The value passed here will be used in `module.context.use(servicePath)` and will become the prefix for the foxx service.
+
+### Route Object  
+Detail about every properties are explained later.
+|  property name  |  value that should be passed  | is it optional? |
+| ---- | ---- | --- |
+|  method  | string | mandatory |
+|  path  | string  |mandatory |
+|  func  |  function |mandatory |
+|  request  |  object(details explained later)  | optional|
+|  response  |  object(detials explained later)  |optional|
+|  conditions  |  array of strings  |optional|
+
+1. method  
+Method for the http request which the route is going to handle. It is not case sensitive.  
+Example: `{method: "get"}`
+2. path  
+Path of the route.  
+Example: `{path: "/foxx-route/:collection-name/:document-key/fetch-all"}`
+3. func  
+Function for the route.
+The function given for `func` property is expected to return a value.
+The framework will evaluate the returned value and decide which status code to apply.
+The table for status code deciding process is as follow.  
+
+- When the returned property is an single element array
+
+|value of the element|status code|
+---|---|
+|undefined|501|
+|false|403|
+|true|204|
+|null|404|
+|other than above|200|
+- When the returned property is an array
 
 |value|status code|
 ---|---|
@@ -62,161 +221,180 @@ It uses following table to decide;
 |true|204|
 |null|404|
 |other than above|200|
-_NOTES_  
-If the returned value is an array with 1 element, status code will be decided based on the above table.
 
-- response body
+- When the returned property is an array with more than 2 elements
 
-|value|what will happen|
-|---|---|
-|value which is a object but not null|JSON.stringify(value) will becomes the body|
-|non-object value|JSON.stringify({data: value}) will become the body|
+|value|status code|
+---|---|
+|array with more than 2 elements|200|
 
-- assigning status code and response body explicitly
-
-You can return a object with status and body property.  
-`{status: number, body: value } `  
-number at status will become the status code while body will become the response body.
-
-## Getting started
-1. Routes Object
-
-Schema is as follow
-
+However, if you wish to decide the status code on your own, you can return a object with status property and body property like this.
 ```
 {
-  method: "get", // http method for this route
-  path: "/path/to/this/route",
-  func: function() {
-    const queryResult = //some database query
-    return queryResult
-  },
-  request: {
-    body: // joi schema for request body. doesn't work on get method
-    // body is the equivalent of router.body(*joi-schema*)
-    query: {
-      // joi schema for query parameter. only works in get method
-      // note that the key in this property must match the name of the parameter
-      [key]: {
-        schema: scheme -> joi object
-        info: string -> description for the  parameter.
-      }
-    },
-    headers: {
-      // note that the key in this property must match the name of the parameter
-      [key]: {
-        schema: scheme -> joi object
-        info: string -> description for the  parameter.
-      }
-    },
-    path: {
-      // note that the key in this property must match the name of the parameter
-      [key]: {
-        schema: scheme -> joi object
-        info: string -> description for the  parameter.
-      }
-    },
-    // joi schema for path params.
-    // note that the key in this property must match the name of the parameter
-  },
-  response: [
-    {
-      status:  //status code,
-      schema:  // joi schema,
-      body:    // optional,
-    }
-    // values returned from function registered at func property will be validated with joi schema registered here if any.
-    // If nothing is defined, value will be validated with the function that will decide which status-code to use.
-  ],
-  conditions: [
-    // array of strings
-    // strings must be a key to functions registered with config object(description below)
-    // function at the func property will be invoked only when the request parameter passes the functions here.
-  ]
+  status: <<status code>>,
+  body: <<some value>>
 }
 ```
+number at the status will become the status code while value in the body will become the response body. If the value on the body is not an object, framework will generate a object with single property `data` and the value that was on the body property will be assigned there.  
+Example: `{data: "value at body"}`
 
-3. Config Object
-Schema is as follow:
+4. request  
+`request` property is where you define the required request parameter.
+Following table summrizes the what each property does.
 
+|property name|what it does|
+---|---|
+|path|defines the path parameter. details are explained later.|
+|body|equivalent of `router.body(schema)`|
+|query|defines query parameter. details are explained later.|
+|headers|defines the header parameter.  details are explained later.|
+
+### query, path and headers
+While body is simple as the `schema` provided will just be passed onto  `router.body(schema)`, other 3 works little bit different.  
+Object-Foxx provide 2 different way of defining them.
+- schema and infomation  
+If you are planning to provide a description the parameter, provide a object with `schema` property and `info` property.
+`schema` property must be provided with joi schema while `info` property must be provided with string that summerizes the parameter.
+Example:
 ```
-{
-  servicePath: // string. prefix for the mounted path
-  noAdditionalRoutes: // when set to false, object-foxx will not expose it's api for accessing results of the check it did for aqls and such.
-  use: {
-  // object or array with functions: functions passed here will be registered to the router object;
-  // like -> router.use(func)
+reqeust: {
+  path: {
+    pathKey: {
+      schema: joi schema,
+      info: "string of information about the parameter"
+    }
   },
-  aqls: {
-  // object with strings: you will put your aql string here.
-  // Every aql string within the object will be checked everytime when you upload your foxx script
-  // you are able to use request parameter without explicitly defininig the bindVars;
-  // @body -> request body
-  // @path -> pathParams
-  // @query -> queryParams
-  // @headers -> request headers
-  },
-  conditions: {
-  // object with functions: you will put functions you would wish to use prior to to the execution of middleware.
-  // You can call these functions by passing corresponding key in the routes object's condition property.
+  query: {
+    querykey: {
+      schema: joi schema,
+      info: "string of information about the parameter"
+    },
+    anotherQuery: {
+      schema: joi schema2,
+      info: "info2"
+    }
   }
 }
+```  
+Will become  
 ```
-
-### useful functions
-The project exports 3 different functions.
-
+.pathParam("pathKey", pathKey.schema, pathKey.info)
+.queryParam("queryKey", queryKey.schema, queryKey.info)
+.queryParam("anotherQuery", anotherQuery.schema, anotherQuery.info)
 ```
+- schema only  
+When you need not to provide any information, you can simply provide it with a joi schema.
+Example:
+```
+reqeust: {
+  path: {
+    pathKey: joi schema
+  },
+  query: {
+    querykey: joi schema,
+    anotherQuery:  joi schema
+  }
+}
+```  
+Will become  
+```
+.pathParam("pathKey", pathKey, "no info")
+.queryParam("queryKey", queryKey, "no info")
+.queryParam("anotherQuery", anotherQuery, "no info")
+```
+5. response  
+`response` is different from `router.response()` in foxx.
+You may want to decide which status code to value returned from `func`
+```
+response: [
+  {
+    schema: joi schema,
+    status: number,
+  }
+]
+```
+6. conditions  
+Strings within the array must correspond with the properties of the functions supplied at `conditions` in Config object.  
+For example, some of your routes may require user to have a special status. Say, the user had to have an **admin** previlige. Client request will come with userId but you need to execute AQL in order to figure out if the user is an **admin** or not.  
+You don't want to specify that in `router.use()` as it will give negative impact on the overall response time, but you don't really want to use a separate router object for this.
+In this case, `conditions` will suit as you only need to pass a string to `conditions` object like this.  
+Example: `conditions: ["isAdmin"]`
+
+## Examples
+Traditional way of foxx and Object-Foxx way of doing things would look different. Here is a comparison.
+Below is an example;
+- traditional
+```
+router.get("/humans/:planet/restaurant", function(req, res) {
+  if (!notDDOS(req)) return res.status(403).json({})
+  else if (!humanRequest(req)) return res.status(403).json({})
   const {
-    main,
-    joiAliases,
-    AQL
-  } = require('object-foxx')
+    planet
+  } = req.pathParams
+  const {
+    food, race
+  } = req.queryParams
+  restaurant
+  const result = db.query({
+    query: `
+      for p in Planets
+        filter
+          p.planet == @planet
+        limit 1
+      for r in Restaurant
+        filter
+          r.food == @food
+          && !HAS(r.segregation, "humans")
+      for g in Guide
+        filter
+          HAS(g.languages, @race)
+        limit 100
+      return MERGE(r,{
+        language: g.languages
+      })
+    `,
+    bindVars: {
+      planet, food, race
+    }
+  })._documents
+  if (result[0] !== null) {
+    res.status(200).json(result)
+  } else {
+    res.status(404).json(result)
+  }
+})
+.queryParam("food", joi.string().required(), "category for food")
+.queryParam("race", joi.string().required().valid(["Octopus", "Gray", "EarthMan", "MoonMan"]), "your race")
+.summary("returns a good restruant in outer space who accepts humans.")
 ```
-
-1. joiAliases
-It's just a alias for joi. Allows you to type less.
-The function will return following object;
-
+- object foxx way
 ```
   {
-    any: joi.any,
-    object: joi.object,
-    string: joi.string,
-    number: joi.number,
-    array: joi.array,
-    boolean: joi.boolean,
-    obj: object,
-    str: string,
-    num: number,
-    array: array,
-    bool: boolean,
-    // additional
-    int: number().integer(),
-    float: number().float()
+    method: "get",
+    path: "/humans/:planet/restaurant/",
+    func: function(){
+      return AQL({key: "galaxticRestaurants"})
+    },
+    request: {
+      query: {
+        race: {
+          schema: str().required().valid(["Octopus", "Gray", "EarthMan", "MoonMan"]),
+          info: "your race"
+        },
+        food: {
+          schema: str().required(),
+          info: "category for food"
+        }
+      }
+    },
+    condition: [
+      "ddos", "humanRequest"
+    ],
+    info: {
+      summary: "returns a good restruant in outerspace who accepts humans"
+    }
   }
 ```
+You notice that in Object-Foxx, you can configure the schema for queryParam in a object under `request.query` property. Furthermore, method and path is defined more explicitly and status code and the body for the response is not explicitly defined.
 
-2. AQL
-
-  You are required to use every variables you pass to db.\_query for executing aql which is sometime daunting.
-  AQL takes a string or object as a first argument:
-  - Object
-  when the argument is an object, it must have a `key` property which value must correspond with the aql string you have passed on config-object which was mentioned earlier.
-  - String
-  When a string is passed, it must be a aql query.
-  you are able to access the request parameters with just like the aql functions you registered with the config object.
-
-_notes_
-Some may argue that this function may result in higher chance of errors;
-Since arangodb validates every incoming requests when it arrives with joi,
-I believe explicit declaration of query parameters are overkill.
-
-3. main
-
-  - arg1
-  you will pass array of routes object here.
-  - arg2
-  you will pass the config object
-
-``main(arg1, arg2)``
+That's because, as it was mentioned earlier, in object-foxx, unelss defined explicitly 1) status code will be decided automatically, 2) for recurrent tasks, condition property can be supplied to invoke certain functions prior to invoking function supplied at func property. Unlike `router.use`, it will not be applied for every route; which could be useful to avoid doing things that's unecessary.
