@@ -151,12 +151,12 @@ db._query({
       filter
         a.authorization == @authorization
       limit 1
-    for u in Users
+    for m in MarsPeople
       filter
-        u.race == @race
-        && u.skinColor == @skinColor
+        m.race == @race
+        && m.skinColor == @skinColor
       limit 5
-    return u
+    return m
   `,
   bindVars: {
     race: req.queryParams.race,
@@ -172,12 +172,12 @@ AQL(`
     filter
       a.authorization == @headers.authorization
     limit 1
-  for u in Users
+  for m in MarsPeople
     filter
-      u.race == @query.race
-      && u.skinColor == @query.skinColor
+      m.race == @query.race
+      && m.skinColor == @query.skinColor
     limit 5
-  return u
+  return m
 `)
 ```
 - how to import  
