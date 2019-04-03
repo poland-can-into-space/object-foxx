@@ -19,6 +19,10 @@ Try Catch block is responsible for lengthy code but it is pretty important in Ja
 The framework will take care of them behind the hood.
 
 ## Comparison  
+### In a nutshell
+Each route will be represented as a javascript object: thus, it makes the important properties of the route more **explicit**; reducing the learning cost.
+
+### Code
 Below is an example of hypothetical API for outerspace restaurant search engine.
 - traditional
 ```
@@ -117,7 +121,6 @@ const {
   obj,    //object
   str,    // string
   num,    // number
-  array,  // array,
   bool,   // boolean,
   int,    // umber().integer,
   float,  // number
