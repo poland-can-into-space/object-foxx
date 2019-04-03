@@ -327,13 +327,13 @@ reqeust: {
   }
 }
 ```  
-Will become  
+Is equivalent of   
 ```
 .pathParam("pathKey", pathKey.schema, pathKey.info)
 .queryParam("queryKey", queryKey.schema, queryKey.info)
 .queryParam("anotherQuery", anotherQuery.schema, anotherQuery.info)
 ```
-- schema only  
+- without information about the parameter  
 When you need not to provide any information, you can simply provide it with a joi schema.
 Example:
 ```
@@ -347,7 +347,7 @@ reqeust: {
   }
 }
 ```  
-Will become  
+is equivalent of   
 ```
 .pathParam("pathKey", pathKey, "no info")
 .queryParam("queryKey", queryKey, "no info")
@@ -370,82 +370,6 @@ For example, some of your routes may require user to have a special status. Say,
 You don't want to specify that in `router.use()` as it will give negative impact on the overall response time, but you don't really want to use a separate router object for this.
 In this case, `conditions` will suit as you only need to pass a string to `conditions` object like this.  
 Example: `conditions: ["isAdmin"]`
-
-## Examples
-Traditional way of foxx and Object-Foxx way of doing things would look different. Here is a comparison.
-Below is an example;
-- traditional
-```
-router.get("/humans/:planet/restaurant", function(req, res) {
-  if (!notDDOS(req)) return res.status(403).json({})
-  else if (!humanRequest(req)) return res.status(403).json({})
-  const {
-    planet
-  } = req.pathParams
-  const {
-    food, race
-  } = req.queryParams
-  restaurant
-  const result = db.query({
-    query: `
-      for p in Planets
-        filter
-          p.planet == @planet
-        limit 1
-      for r in Restaurant
-        filter
-          r.food == @food
-          && !HAS(r.segregation, "humans")
-      for g in Guide
-        filter
-          HAS(g.languages, @race)
-        limit 100
-      return MERGE(r,{
-        language: g.languages
-      })
-    `,
-    bindVars: {
-      planet, food, race
-    }
-  })._documents
-  if (result[0] !== null) {
-    res.status(200).json(result)
-  } else {
-    res.status(404).json(result)
-  }
-})
-.queryParam("food", joi.string().required(), "category for food")
-.queryParam("race", joi.string().required().valid(["Octopus", "Gray", "EarthMan", "MoonMan"]), "your race")
-.summary("returns a good restruant in outer space who accepts humans.")
-```
-- object foxx way
-```
-  {
-    method: "get",
-    path: "/humans/:planet/restaurant/",
-    func: function(){
-      return AQL({key: "galaxticRestaurants"})
-    },
-    request: {
-      query: {
-        race: {
-          schema: str().required().valid(["Octopus", "Gray", "EarthMan", "MoonMan"]),
-          info: "your race"
-        },
-        food: {
-          schema: str().required(),
-          info: "category for food"
-        }
-      }
-    },
-    condition: [
-      "ddos", "humanRequest"
-    ],
-    info: {
-      summary: "returns a good restruant in outerspace who accepts humans"
-    }
-  }
-```
 
 ## Future remarks  
 Things that I'd love to do:
