@@ -1,6 +1,9 @@
 # IMPORTANT
+- english
 I've found a breaking bug: Please note that you are discouraged to use this framework until everything is fixed.
 I will update as soon as possible.
+- japanese
+バグを見つけたので修正中です。
 
 # Object-Foxx
 ## About
