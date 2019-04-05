@@ -1,3 +1,7 @@
+# IMPORTANT
+I've found a breaking bug: Please note that you are discouraged to use this framework until everything is fixed.
+I will update as soon as possible.
+
 # Object-Foxx
 ## About
 Reducing learning/development cost for ArangoDB foxx.
