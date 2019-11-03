@@ -59,6 +59,7 @@ function main(routes, config, router) {
     const distinguish = JSON.parse(JSON.stringify(new Date))
     jsonServerRoutes(distinguish);
   }
+  Object.freeze(global._json_server_config);
   module.context.use(servicePath, r, tag);
 }
 
