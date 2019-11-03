@@ -14,7 +14,7 @@ The framework will take care of them behind the hood.
 
 ## Comparison  
 ### In a nutshell
-Each route will be represented as a javascript object: thus, it makes the important properties of the route more **explicit**; reducing the learning cost.
+Each route will be represented as a javascript object.
 
 ### Code
 Below is an example of hypothetical API for outerspace restaurant search engine.
