@@ -2,11 +2,6 @@
 ## About
 Reducing learning/development cost for ArangoDB foxx.
 
-## NOTES  
-This is my first time uploading a framework for public inspection, I'm pretty sure it's missing a lot.   
-Especially with documents; I never wrote anything like this.  
-**I appreciate feedbacks!!!**
-
 ## features!  
 1. Automatic AQL validation  
 Any aql string registered at config object will be validated upon uploading foxx.
@@ -14,8 +9,7 @@ Debugging made easier!
 2. Alias for joi  
 It has a convenient function that exports alias for joi.
 `joi.string().required()` will become `str().required()`.
-3. No Try Catch block    
-Try Catch block is responsible for lengthy code but it is pretty important in Javascript.
+3. Error handling block    
 The framework will take care of them behind the hood.
 
 ## Comparison  
